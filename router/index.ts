@@ -9,7 +9,7 @@ const routes: Array<RouteRecordRaw> = [
 ]
 
 export const router = createRouter({
-  history: createWebHistory('/france-tool/'),
+  history: createWebHistory('/finance-tool/'),
   routes: routes,
   strict: true,
   scrollBehavior(to, from, savedPosition) {

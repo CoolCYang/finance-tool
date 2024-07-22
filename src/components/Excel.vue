@@ -249,7 +249,9 @@ const tableData = computed(
 )
 
 const priceList = computed(() =>
-  columns.value.filter((item) => item.title.includes('额'))
+  columns.value.filter((item) =>
+    isString(item?.title) ? item.title.includes('额') : false
+  )
 )
 
 const getTableDataTotal = (key) => {

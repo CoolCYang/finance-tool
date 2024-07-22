@@ -1,4 +1,4 @@
-import { createRouter } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import { createWebHistory } from 'vue-router'
 
 const routes: Array<RouteRecordRaw> = [
@@ -9,7 +9,7 @@ const routes: Array<RouteRecordRaw> = [
 ]
 
 export const router = createRouter({
-  history: createWebHistory('/finance-tool/'),
+  history: createWebHashHistory('/finance-tool/'),
   routes: routes,
   strict: true,
   scrollBehavior(to, from, savedPosition) {

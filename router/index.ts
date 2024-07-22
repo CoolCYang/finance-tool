@@ -4,13 +4,12 @@ import { createWebHistory } from 'vue-router'
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
-    name: 'login',
     component: () => import('~/views/index.vue')
   }
 ]
 
 export const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory('/france-tool/'),
   routes: routes,
   strict: true,
   scrollBehavior(to, from, savedPosition) {

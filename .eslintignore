@@ -1,0 +1,7 @@
+public
+dist
+*.d.ts
+package.json
+.vscode
+Dockerfile
+node_modules

@@ -55,7 +55,7 @@
             action=""
             :auto-upload="false"
             :show-file-list="false"
-            accept=".xlsx, .xls,"
+            accept=".xlsx, .xls,.csv"
             :on-change="handleFileUpload"
           >
             <el-button type="primary">上传数据</el-button>
@@ -124,6 +124,8 @@
 import { computed, ref, onMounted } from 'vue'
 import { ElMessage, TableV2FixedDir } from 'element-plus'
 import ExcelJS from 'exceljs'
+import * as XLSX from 'xlsx'
+import Papa from 'papaparse'
 import Dayjs from 'dayjs'
 import { saveAs } from 'file-saver'
 
@@ -283,24 +285,52 @@ const readFile = async (file) => {
   const headers = []
   const tableData = []
 
-  const workbook = new ExcelJS.Workbook()
-  await workbook.xlsx.load(await raw.arrayBuffer())
+  if (file.name.endsWith('.csv')) {
+    const text = await raw.text()
+    const results = Papa.parse(text, { header: true })
+    headers.push(...Object.keys(results.data[0]))
+    tableData.push(...results.data)
+  } else if (file.name.endsWith('.xlsx')) {
+    const workbook = new ExcelJS.Workbook()
+    await workbook.xlsx.load(await raw.arrayBuffer())
 
-  const worksheet = workbook.getWorksheet(1)
-  const rows = worksheet.getRows(1, worksheet.rowCount) ?? []
+    const worksheet = workbook.getWorksheet(1)
+    const rows = worksheet.getRows(1, worksheet.rowCount) ?? []
 
-  const headerRow = rows[headerRowIndex.value]
-  for (let j = 0; j < headerRow.cellCount; j++) {
-    headers.push(headerRow.getCell(j + 1).value as string)
-  }
+    const headerRow = rows[headerRowIndex.value]
+    for (let j = 0; j < headerRow.cellCount; j++) {
+      headers.push(headerRow.getCell(j + 1).value)
+    }
 
-  for (let i = headerRowIndex.value + 1; i < rows.length; i++) {
-    const row = rows[i]
-    const rowData: Record<string, any> = {}
-    headers.forEach((header, index) => {
-      rowData[header] = row.getCell(index + 1).value || ''
-    })
-    tableData.push(rowData)
+    for (let i = headerRowIndex.value + 1; i < rows.length; i++) {
+      const row = rows[i]
+      const rowData = {}
+      headers.forEach((header, index) => {
+        rowData[header] = row.getCell(index + 1).value || ''
+      })
+      tableData.push(rowData)
+    }
+  } else if (file.name.endsWith('.xls')) {
+    const data = new Uint8Array(await raw.arrayBuffer())
+    const workbook = XLSX.read(data, { type: 'array' })
+
+    const worksheet = workbook.Sheets[workbook.SheetNames[0]]
+    const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 })
+
+    headers.push(...json[headerRowIndex.value])
+
+    for (let i = headerRowIndex.value + 1; i < json.length; i++) {
+      const row = json[i]
+      const rowData = {}
+      headers.forEach((header, index) => {
+        rowData[header] = row[index] || ''
+      })
+      tableData.push(rowData)
+    }
+  } else {
+    ElMessage('不支持的文件类型')
+    loading.value = false
+    return
   }
 
   const result = {
@@ -329,6 +359,10 @@ const handleTabsEdit = async (
 }
 
 const exportExcel = async () => {
+  if (!tableData.value.length) {
+    ElMessage('没有数据哦，不可以导出')
+    return
+  }
   const workbook = new ExcelJS.Workbook()
   const worksheet = workbook.addWorksheet('Sheet 1')
 

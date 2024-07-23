@@ -16,8 +16,8 @@
             <el-option
               v-for="item in columns"
               :key="item"
-              :label="item.title"
-              :value="item.title"
+              :label="item.headerName"
+              :value="item.headerName"
             />
           </el-select>
         </el-form-item>
@@ -31,8 +31,8 @@
             <el-option
               v-for="item in columns"
               :key="item"
-              :label="item.title"
-              :value="item.title"
+              :label="item.headerName"
+              :value="item.headerName"
             />
           </el-select>
         </el-form-item>
@@ -68,9 +68,9 @@
 
         <el-form-item>
           <span class="mr-2" v-for="(item, index) in priceList" :key="index">
-            <span>总{{ item.title }}：</span>
+            <span>总{{ item.headerName }}：</span>
             <span class="text-green-5">
-              {{ getTableDataTotal(item.title) }}
+              {{ getTableDataTotal(item.headerName) }}
             </span>
           </span>
         </el-form-item>
@@ -99,23 +99,15 @@
     >
       <el-auto-resizer>
         <template #default="{ height, width }">
-          <el-table-v2
-            ref="tableRef"
-            :columns="columns"
-            :data="tableData"
-            :width="width"
-            :height="height"
-            fixed
+          <AgGridVue
+            v-if="tableData.length"
+            :rowData="tableData"
+            :columnDefs="columnsData"
+            :style="{ height: height + 'px' }"
+            class="ag-theme-quartz"
           />
         </template>
       </el-auto-resizer>
-
-      <el-backtop
-        :visibility-height="0"
-        :right="50"
-        :bottom="50"
-        @click="scrollToTop"
-      />
     </div>
   </div>
 </template>
@@ -123,7 +115,6 @@
 <script setup lang="tsx">
 import { computed, ref, onMounted } from 'vue'
 import { ElMessage, TableV2FixedDir } from 'element-plus'
-import ExcelJS from 'exceljs'
 import * as XLSX from 'xlsx'
 import Papa from 'papaparse'
 import Dayjs from 'dayjs'
@@ -132,6 +123,11 @@ import { saveAs } from 'file-saver'
 import useIndexDB from '../../hooks/indexDB.ts'
 
 import type { TableV2Instance, TabPaneName } from 'element-plus'
+
+import 'ag-grid-community/styles/ag-grid.css' // Mandatory CSS required by the Data Grid
+import 'ag-grid-community/styles/ag-theme-quartz.css' // Optional Theme applied to the Data Grid
+import { AgGridVue } from 'ag-grid-vue3' // Vu
+import { table } from 'console'
 
 const activeName = ref('')
 const file = ref([])
@@ -183,29 +179,23 @@ function getHighlightHtml(content, keyword) {
   }
 }
 
-const getCellRender = (headerLabel) => {
+const getCellRender = (params) => {
+  const headerLabel = params.column.colId
+  const cellData = params.value
+
   if (!isString(headerLabel)) {
-    return null
+    return cellData
   }
 
   if (headerLabel.includes('时间')) {
-    return ({ cellData }) => (
-      <div style="padding: 10px 0;">
-        {Dayjs(cellData).format('YYYY-MM-DD HH:mm:ss') || ''}
-      </div>
-    )
+    return Dayjs(cellData).format('YYYY-MM-DD HH:mm:ss') || ''
   } else if (headerLabel.includes('号')) {
-    return null
+    return cellData
   } else {
     if (filterKey.value && filterKey.value === headerLabel && keyword.value) {
-      return ({ cellData }) => (
-        <div
-          style="padding: 10px 0;"
-          v-html={getHighlightHtml(cellData, keyword.value)}
-        ></div>
-      )
+      return getHighlightHtml(cellData, keyword.value)
     } else {
-      return ({ cellData }) => <div style="padding: 10px 0;">{cellData}</div>
+      return cellData
     }
   }
 }
@@ -219,27 +209,22 @@ const getColumnFixed = (headerLabel) => {
 const columns = computed(() => {
   const result =
     activeTable.value?.headers?.map((headerLabel, columnIndex) => ({
-      key: columnIndex,
-      dataKey: headerLabel,
-      title: headerLabel,
-      minWidth: getColumnWidth(headerLabel),
+      field: headerLabel,
+      headerName: headerLabel,
       width: getColumnWidth(headerLabel),
-      cellRenderer: getCellRender(headerLabel),
-      fixed: getColumnFixed(headerLabel)
+      cellRenderer: getCellRender,
+      pinned: getColumnFixed(headerLabel) ? 'right' : '' //
     })) || []
 
   result.unshift({
-    key: 'column-n-1',
-    width: 50,
-    title: '序号',
-    cellRenderer: ({ rowIndex }) => (
-      <span style="font-weight: bold;">{`${rowIndex + 1}`}</span>
-    ),
-    align: 'center'
+    headerName: '序号',
+    valueGetter: 'node.rowIndex + 1',
+    width: 80 // 设置序号列的宽度为100像素
   })
 
   return result
 })
+const columnsData = computed(() => columns.value?.map((item) => item) || [])
 
 const tableData = computed(
   () =>
@@ -252,7 +237,7 @@ const tableData = computed(
 
 const priceList = computed(() =>
   columns.value.filter((item) =>
-    isString(item?.title) ? item.title.includes('额') : false
+    isString(item?.headerName) ? item.headerName.includes('额') : false
   )
 )
 
@@ -290,27 +275,7 @@ const readFile = async (file) => {
     const results = Papa.parse(text, { header: true })
     headers.push(...Object.keys(results.data[0]))
     tableData.push(...results.data)
-  } else if (file.name.endsWith('.xlsx')) {
-    const workbook = new ExcelJS.Workbook()
-    await workbook.xlsx.load(await raw.arrayBuffer())
-
-    const worksheet = workbook.getWorksheet(1)
-    const rows = worksheet.getRows(1, worksheet.rowCount) ?? []
-
-    const headerRow = rows[headerRowIndex.value]
-    for (let j = 0; j < headerRow.cellCount; j++) {
-      headers.push(headerRow.getCell(j + 1).value)
-    }
-
-    for (let i = headerRowIndex.value + 1; i < rows.length; i++) {
-      const row = rows[i]
-      const rowData = {}
-      headers.forEach((header, index) => {
-        rowData[header] = row.getCell(index + 1).value || ''
-      })
-      tableData.push(rowData)
-    }
-  } else if (file.name.endsWith('.xls')) {
+  } else if (file.name.endsWith('.xls') || file.name.endsWith('.xlsx')) {
     const data = new Uint8Array(await raw.arrayBuffer())
     const workbook = XLSX.read(data, { type: 'array' })
 

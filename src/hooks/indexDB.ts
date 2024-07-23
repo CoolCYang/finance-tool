@@ -1,5 +1,4 @@
 import { ref } from 'vue'
-import ExcelJS from 'exceljs'
 import { openDB } from 'idb'
 
 export default function () {

@@ -114,7 +114,7 @@
 
 <script setup lang="tsx">
 import { computed, ref, onMounted } from 'vue'
-import { ElMessage, TableV2FixedDir } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import * as XLSX from 'xlsx'
 import Papa from 'papaparse'
 import Dayjs from 'dayjs'
@@ -122,7 +122,7 @@ import { saveAs } from 'file-saver'
 
 import useIndexDB from '../../hooks/indexDB.ts'
 
-import type { TableV2Instance, TabPaneName } from 'element-plus'
+import type { TabPaneName } from 'element-plus'
 
 import 'ag-grid-community/styles/ag-grid.css' // Mandatory CSS required by the Data Grid
 import 'ag-grid-community/styles/ag-theme-quartz.css' // Optional Theme applied to the Data Grid
@@ -133,7 +133,6 @@ const activeName = ref('')
 const file = ref([])
 
 const loading = ref<boolean>(false)
-const tableRef = ref<TableV2Instance>()
 
 const headerRowIndex = ref(4)
 const filterKey = ref('')
@@ -202,7 +201,7 @@ const getCellRender = (params) => {
 
 const getColumnFixed = (headerLabel) => {
   if (fixedColumns.value.includes(headerLabel)) {
-    return TableV2FixedDir.RIGHT
+    return 'right'
   }
 }
 
@@ -252,10 +251,6 @@ const getTableDataTotal = (key) => {
 
 const handleFileUpload = async (file: Event) => {
   readFile(file)
-}
-
-function scrollToTop() {
-  tableRef.value?.scrollToTop(0)
 }
 
 const readFile = async (file) => {

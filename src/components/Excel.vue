@@ -120,7 +120,7 @@ import Papa from 'papaparse'
 import Dayjs from 'dayjs'
 import { saveAs } from 'file-saver'
 
-import useIndexDB from '../../hooks/indexDB.ts'
+import useIndexDB from '../hooks/indexDB.ts'
 
 import type { TabPaneName } from 'element-plus'
 

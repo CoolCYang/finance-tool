@@ -36,11 +36,9 @@ export function findRouteByPath(path: string, routes: RouteRecordRaw[]) {
     return res
   } else {
     for (let i = 0; i < routes.length; i++) {
-      if (
-        routes[i].children instanceof Array &&
-        routes[i].children.length > 0
-      ) {
-        res = findRouteByPath(path, routes[i].children)
+      const children = routes[i].children
+      if (Array.isArray(children) && children.length > 0) {
+        res = findRouteByPath(path, children)
         if (res) {
           return res
         }

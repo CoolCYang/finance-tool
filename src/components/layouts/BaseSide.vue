@@ -1,58 +1,75 @@
 <template>
   <el-menu
-    default-active="2"
+    :default-active="activeMenu"
     class="el-menu-vertical-demo"
     :collapse="isCollapse"
     @open="handleOpen"
     @close="handleClose"
+    router
   >
-    <el-sub-menu index="1">
+    <!-- 首页 -->
+    <el-menu-item index="/">
+      <el-icon><HomeFilled /></el-icon>
+      <template #title>首页</template>
+    </el-menu-item>
+
+    <!-- 财务菜单 -->
+    <el-sub-menu index="finance">
       <template #title>
-        <el-icon><location /></el-icon>
-        <span>Navigator One</span>
+        <el-icon><Money /></el-icon>
+        <span>财务菜单</span>
       </template>
-      <el-menu-item-group>
-        <template #title><span>Group One</span></template>
-        <el-menu-item index="1-1">item one</el-menu-item>
-        <el-menu-item index="1-2">item two</el-menu-item>
-      </el-menu-item-group>
-      <el-menu-item-group title="Group Two">
-        <el-menu-item index="1-3">item three</el-menu-item>
-      </el-menu-item-group>
-      <el-sub-menu index="1-4">
-        <template #title><span>item four</span></template>
-        <el-menu-item index="1-4-1">item one</el-menu-item>
-      </el-sub-menu>
+      <el-menu-item index="/finance/budget">预算管理</el-menu-item>
+      <el-menu-item index="/finance/expense">费用报销</el-menu-item>
+      <el-menu-item index="/finance/report">财务报表</el-menu-item>
     </el-sub-menu>
-    <el-menu-item index="2">
-      <el-icon><icon-menu /></el-icon>
-      <template #title>Navigator Two</template>
-    </el-menu-item>
-    <el-menu-item index="3" disabled>
-      <el-icon><document /></el-icon>
-      <template #title>Navigator Three</template>
-    </el-menu-item>
-    <el-menu-item index="4">
-      <el-icon><setting /></el-icon>
-      <template #title>Navigator Four</template>
+
+    <!-- 采购菜单 -->
+    <el-sub-menu index="purchase">
+      <template #title>
+        <el-icon><ShoppingCart /></el-icon>
+        <span>采购菜单</span>
+      </template>
+      <el-menu-item index="/purchase/requisition">采购申请</el-menu-item>
+      <el-menu-item index="/purchase/order">采购订单</el-menu-item>
+      <el-menu-item index="/purchase/inventory">库存管理</el-menu-item>
+      <el-menu-item index="/purchase/report">采购报表</el-menu-item>
+    </el-sub-menu>
+
+    <!-- 系统设置 -->
+    <el-menu-item index="/settings">
+      <el-icon><Setting /></el-icon>
+      <template #title>系统设置</template>
     </el-menu-item>
   </el-menu>
 </template>
 
 <script lang="ts" setup>
-import { ref } from "vue";
+import { ref, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import {
-  Location,
-  Document,
-  Menu as IconMenu,
-  Setting,
-} from "@element-plus/icons-vue";
+  HomeFilled,
+  Money,
+  ShoppingCart,
+  Setting
+} from '@element-plus/icons-vue'
 
-const isCollapse = ref(true);
+const isCollapse = ref(false)
+const route = useRoute()
+
+// 计算当前激活的菜单
+const activeMenu = computed(() => {
+  const path = route.path
+  if (path.startsWith('/finance')) return 'finance'
+  if (path.startsWith('/purchase')) return 'purchase'
+  return path
+})
+
 const handleOpen = (key: string, keyPath: string[]) => {
-  console.log(key, keyPath);
-};
+  console.log(key, keyPath)
+}
+
 const handleClose = (key: string, keyPath: string[]) => {
-  console.log(key, keyPath);
-};
+  console.log(key, keyPath)
+}
 </script>

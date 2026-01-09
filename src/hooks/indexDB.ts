@@ -41,5 +41,11 @@ export default function () {
     await db.delete('tables', fileName)
   }
 
-  return { fileList, storeData, retrieveData, deleteData, getStoreAll }
+  const clearAll = async () => {
+    const db = await openDatabase()
+    await db.clear('tables')
+    console.log('所有数据已清除')
+  }
+
+  return { fileList, storeData, retrieveData, deleteData, getStoreAll, clearAll }
 }

@@ -6,14 +6,12 @@ import vueJsx from '@vitejs/plugin-vue-jsx'
 import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 
-import Unocss from 'unocss/vite'
-import {
-  presetAttributify,
-  presetIcons,
-  presetUno,
-  transformerDirectives,
-  transformerVariantGroup
-} from 'unocss'
+import UnoCSS from '@unocss/vite'
+import { presetUno } from '@unocss/preset-uno'
+import { presetAttributify } from '@unocss/preset-attributify'
+import { presetIcons } from '@unocss/preset-icons'
+import { transformerDirectives } from '@unocss/transformer-directives'
+import { transformerVariantGroup } from '@unocss/transformer-variant-group'
 
 const pathSrc = path.resolve(__dirname, 'src')
 
@@ -25,6 +23,7 @@ export default defineConfig({
       '~/': `${pathSrc}/`
     }
   },
+
   css: {
     preprocessorOptions: {
       scss: {
@@ -48,18 +47,15 @@ export default defineConfig({
       dts: 'src/components.d.ts'
     }),
 
-    // https://github.com/antfu/unocss
-    // see unocss.config.ts for config
-    Unocss({
+    // https://github.com/unocss/unocss
+    UnoCSS({
       presets: [
         presetUno(),
-        presetAttributify(),
         presetIcons({
           scale: 1.2,
           warn: true
         })
-      ],
-      transformers: [transformerDirectives(), transformerVariantGroup()]
+      ]
     })
   ]
 })
